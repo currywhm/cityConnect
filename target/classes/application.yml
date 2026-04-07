@@ -1,0 +1,38 @@
+server:
+  port: ${PORT:80}
+
+spring:
+  application:
+    name: city-connect-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:city_connect}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root@123}
+  mvc:
+    view:
+      suffix: .html
+      prefix: /
+  jackson:
+    default-property-inclusion: non_null
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:schema.sql,classpath:bootstrap.sql
+      encoding: UTF-8
+
+mybatis:
+  mapper-locations: classpath*:mapper/*Mapper.xml
+
+app:
+  auth:
+    admin-token: ${ADMIN_TOKEN:city-connect-admin}
+    internal-token: ${INTERNAL_TOKEN:city-connect-internal}
+    session-days: ${SESSION_DAYS:7}
+  chat:
+    ws-url: ${CHAT_WS_URL:wss://example.com/city-connect/ws}
+  fee:
+    signup-bonus-amount: ${SIGNUP_BONUS_AMOUNT:100.00}
+    publish-fee-amount: ${PUBLISH_FEE_AMOUNT:5.00}
+    accept-fee-amount: ${ACCEPT_FEE_AMOUNT:5.00}
+    commission-rate: ${COMMISSION_RATE:0.50}

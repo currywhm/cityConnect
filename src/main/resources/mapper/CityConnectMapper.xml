@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CityConnectMapper">
+
+  <select id="selectUserByOpenid" parameterType="map" resultType="map">
+    SELECT * FROM users WHERE openid = #{openid}
+  </select>
+
+  <insert id="insertUser" parameterType="map">
+    INSERT INTO users(id, openid, unionid, appid, nickname, avatar_url, status, registered_at, last_login_at)
+    VALUES(#{id}, #{openid}, #{unionid}, #{appid}, #{nickname}, #{avatarUrl}, 'active', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+  </insert>
+
+  <insert id="insertUserProfile" parameterType="map">
+    INSERT INTO user_profiles(user_id, city, bio, phone_country_code, phone_masked, gender, birthday)
+    VALUES(#{userId}, '', '', NULL, '', NULL, NULL)
+  </insert>
+
+  <insert id="insertUserCredit" parameterType="map">
+    INSERT INTO user_credit(user_id, credit_score, no_show_count, withdraw_count, complete_count, report_count, risk_level, restricted_until, notes)
+    VALUES(#{userId}, 100, 0, 0, 0, 0, 'normal', NULL, '')
+  </insert>
+
+  <update id="updateUserLoginInfo" parameterType="map">
+    UPDATE users
+    SET nickname = #{nickname},
+        avatar_url = #{avatarUrl},
+        last_login_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{userId}
+  </update>
+
+  <insert id="insertAppSession" parameterType="map">
+    INSERT INTO app_sessions(id, user_id, session_token, expires_at)
+    VALUES(#{id}, #{userId}, #{sessionToken}, #{expiresAt})
+  </insert>
+
+  <select id="selectUserIdByValidSessionToken" parameterType="map" resultType="map">
+    SELECT user_id
+    FROM app_sessions
+    WHERE session_token = #{sessionToken}
+      AND expires_at &gt; CURRENT_TIMESTAMP(3)
+    ORDER BY created_at DESC
+    LIMIT 1
+  </select>
+
+  <update id="updateUserProfile" parameterType="map">
+    UPDATE user_profiles
+    SET city = COALESCE(#{city}, city),
+        bio = COALESCE(#{bio}, bio),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE user_id = #{userId}
+  </update>
+
+  <select id="selectUserBlock" parameterType="map" resultType="map">
+    SELECT * FROM user_blocks WHERE user_id = #{userId} AND blocked_user_id = #{targetUserId}
+  </select>
+
+  <insert id="insertUserBlock" parameterType="map">
+    INSERT INTO user_blocks(id, user_id, blocked_user_id, reason)
+    VALUES(#{id}, #{userId}, #{targetUserId}, #{reason})
+  </insert>
+
+  <delete id="deleteUserBlock" parameterType="map">
+    DELETE FROM user_blocks WHERE user_id = #{userId} AND blocked_user_id = #{targetUserId}
+  </delete>
+
+  <select id="selectUserById" parameterType="map" resultType="map">
+    SELECT * FROM users WHERE id = #{userId}
+  </select>
+
+  <select id="selectUserProfileById" parameterType="map" resultType="map">
+    SELECT * FROM user_profiles WHERE user_id = #{userId}
+  </select>
+
+  <select id="selectUserCreditById" parameterType="map" resultType="map">
+    SELECT * FROM user_credit WHERE user_id = #{userId}
+  </select>
+
+  <select id="selectWalletByUserId" parameterType="map" resultType="map">
+    SELECT * FROM wallet_accounts WHERE user_id = #{userId}
+  </select>
+
+  <insert id="insertWalletAccount" parameterType="map">
+    INSERT INTO wallet_accounts(user_id, total_balance, withdrawable_balance, bonus_balance, frozen_balance, currency)
+    VALUES(#{userId}, 0, 0, 0, 0, 'CNY')
+  </insert>
+
+  <update id="updateWalletAccountBalances" parameterType="map">
+    UPDATE wallet_accounts
+    <set>
+      <if test="total != null">total_balance = #{total},</if>
+      <if test="withdrawable != null">withdrawable_balance = #{withdrawable},</if>
+      <if test="bonus != null">bonus_balance = #{bonus},</if>
+      <if test="frozen != null">frozen_balance = #{frozen},</if>
+      updated_at = CURRENT_TIMESTAMP(3)
+    </set>
+    WHERE user_id = #{userId}
+  </update>
+
+  <select id="selectWalletLedgerList" parameterType="map" resultType="map">
+    SELECT * FROM wallet_ledger
+    WHERE user_id = #{userId}
+    <if test="bizType != null and bizType != ''">
+      AND biz_type = #{bizType}
+    </if>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <insert id="insertWalletLedger" parameterType="map">
+    INSERT INTO wallet_ledger(
+      id, user_id, biz_type, biz_id, direction, currency, change_amount,
+      withdrawable_change_amount, bonus_change_amount, frozen_change_amount,
+      total_after, withdrawable_after, bonus_after, frozen_after,
+      remark, operator_type, operator_id
+    ) VALUES(
+      #{id}, #{userId}, #{bizType}, #{bizId}, #{direction}, 'CNY', #{changeAmount},
+      #{withdrawableChange}, #{bonusChange}, #{frozenChange},
+      #{totalAfter}, #{withdrawableAfter}, #{bonusAfter}, #{frozenAfter},
+      #{remark}, #{operatorType}, #{operatorId}
+    )
+  </insert>
+
+  <insert id="insertNotification" parameterType="map">
+    INSERT INTO notifications(id, user_id, type, title, content, biz_type, biz_id, read_status, extra_json)
+    VALUES(#{id}, #{userId}, #{type}, #{title}, #{content}, #{bizType}, #{bizId}, 'unread', #{extraJson})
+  </insert>
+
+  <select id="selectNotifications" parameterType="map" resultType="map">
+    SELECT * FROM notifications
+    WHERE user_id = #{userId}
+    <if test="type != null and type != ''">
+      AND type = #{type}
+    </if>
+    <if test="readStatus != null and readStatus != ''">
+      AND read_status = #{readStatus}
+    </if>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectNotificationUnreadSummary" parameterType="map" resultType="map">
+    SELECT type, COUNT(1) AS total
+    FROM notifications
+    WHERE user_id = #{userId}
+      AND read_status = 'unread'
+    GROUP BY type
+  </select>
+
+  <update id="updateNotificationsReadByIds" parameterType="map">
+    UPDATE notifications
+    SET read_status = 'read',
+        read_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE user_id = #{userId}
+      AND id IN
+      <foreach collection="ids" item="id" open="(" separator="," close=")">
+        #{id}
+      </foreach>
+  </update>
+
+  <update id="updateNotificationsReadByType" parameterType="map">
+    UPDATE notifications
+    SET read_status = 'read',
+        read_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE user_id = #{userId}
+      AND type = #{type}
+      AND read_status = 'unread'
+  </update>
+
+  <insert id="insertActivity" parameterType="map">
+    INSERT INTO activities(
+      id, organizer_user_id, title, category, description, location_name, location_address,
+      latitude, longitude, area_code, cover_url, fee_mode, fee_amount, fee_desc,
+      review_status, activity_status, settlement_status, publish_fee_amount,
+      publish_fee_paid, publish_fee_order_id, accepted_fee_total, participant_count,
+      capacity, start_at, end_at
+    ) VALUES(
+      #{id}, #{userId}, #{title}, #{category}, #{description}, #{locationName}, #{locationAddress},
+      #{latitude}, #{longitude}, #{areaCode}, #{coverUrl}, #{feeMode}, #{feeAmount}, #{feeDesc},
+      'pending', 'open', 'pending', #{publishFee}, 1, #{publishFeeOrderId}, 0, 1, #{capacity}, #{startAt}, #{endAt}
+    )
+  </insert>
+
+  <insert id="insertSuccessPaymentOrder" parameterType="map">
+    INSERT INTO payment_orders(id, order_no, user_id, order_type, biz_id, amount, status, channel, client_request_id, paid_at)
+    VALUES(#{id}, #{orderNo}, #{userId}, 'publish_fee', #{bizId}, #{amount}, 'success', 'wallet_balance', #{clientRequestId}, CURRENT_TIMESTAMP(3))
+  </insert>
+
+  <insert id="insertOrganizerParticipant" parameterType="map">
+    INSERT INTO activity_participants(id, activity_id, user_id, role, join_status)
+    VALUES(#{id}, #{activityId}, #{userId}, 'organizer', 'organizer')
+  </insert>
+
+  <insert id="insertActivityMedia" parameterType="map">
+    INSERT INTO activity_media(id, activity_id, media_type, media_url, sort_no)
+    VALUES(#{id}, #{activityId}, 'image', #{mediaUrl}, #{sortNo})
+  </insert>
+
+  <select id="selectMineActivities" parameterType="map" resultType="map">
+    SELECT * FROM activities
+    WHERE organizer_user_id = #{userId}
+    <if test="reviewStatus != null and reviewStatus != ''">
+      AND review_status = #{reviewStatus}
+    </if>
+    <if test="activityStatus != null and activityStatus != ''">
+      AND activity_status = #{activityStatus}
+    </if>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countPendingApplicationsByOrganizer" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM applications a
+    INNER JOIN activities ac ON a.activity_id = ac.id
+    WHERE ac.organizer_user_id = #{userId}
+      AND a.status = 'pending'
+  </select>
+
+  <select id="countEndedActivitiesByOrganizer" parameterType="map" resultType="int">
+    SELECT COUNT(1) FROM activities WHERE organizer_user_id = #{userId} AND activity_status = 'ended'
+  </select>
+
+  <select id="selectOrganizerProfileByUserId" parameterType="map" resultType="map">
+    SELECT u.*, p.city, p.bio, c.credit_score
+    FROM users u
+    LEFT JOIN user_profiles p ON u.id = p.user_id
+    LEFT JOIN user_credit c ON u.id = c.user_id
+    WHERE u.id = #{userId}
+  </select>
+
+  <select id="selectActivityMediaByActivityId" parameterType="map" resultType="map">
+    SELECT * FROM activity_media WHERE activity_id = #{activityId} ORDER BY sort_no ASC
+  </select>
+
+  <select id="selectMyApplicationForActivity" parameterType="map" resultType="map">
+    SELECT a.*, u.nickname AS applicant_nickname, u.avatar_url AS applicant_avatar_url
+    FROM applications a
+    INNER JOIN users u ON a.applicant_user_id = u.id
+    WHERE a.activity_id = #{activityId}
+      AND a.applicant_user_id = #{userId}
+    ORDER BY a.created_at DESC
+    LIMIT 1
+  </select>
+
+  <select id="countActivityParticipantsByStatuses" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM activity_participants
+    WHERE activity_id = #{activityId}
+      AND join_status IN
+      <foreach collection="statuses" item="status" open="(" separator="," close=")">
+        #{status}
+      </foreach>
+  </select>
+
+  <update id="updateActivityWithdrawn" parameterType="map">
+    UPDATE activities
+    SET activity_status = 'withdrawn',
+        ended_at = CURRENT_TIMESTAMP(3),
+        ended_reason = 'organizer_withdraw',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{activityId}
+  </update>
+
+  <update id="updateActivityPublishFeeRefundedNow" parameterType="map">
+    UPDATE activities
+    SET publish_fee_refunded_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{activityId}
+  </update>
+
+  <select id="selectActivitySettlementByActivityId" parameterType="map" resultType="map">
+    SELECT * FROM activity_settlements WHERE activity_id = #{activityId}
+  </select>
+
+  <select id="selectAdminReviewActivities" parameterType="map" resultType="map">
+    SELECT a.*, u.nickname, u.avatar_url, p.city, p.bio, c.credit_score
+    FROM activities a
+    INNER JOIN users u ON a.organizer_user_id = u.id
+    LEFT JOIN user_profiles p ON u.id = p.user_id
+    LEFT JOIN user_credit c ON u.id = c.user_id
+    WHERE 1 = 1
+    <if test="reviewStatus != null and reviewStatus != ''">
+      AND a.review_status = #{reviewStatus}
+    </if>
+    ORDER BY a.created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <insert id="insertActivityReview" parameterType="map">
+    INSERT INTO activity_reviews(id, activity_id, reviewer_admin_id, decision, reason)
+    VALUES(#{id}, #{activityId}, #{reviewerAdminId}, #{decision}, #{reason})
+  </insert>
+
+  <update id="updateActivityReviewStatus" parameterType="map">
+    UPDATE activities
+    SET review_status = #{reviewStatus},
+        reviewed_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{activityId}
+  </update>
+
+  <select id="selectExpiredOpenActivities" parameterType="map" resultType="map">
+    SELECT * FROM activities
+    WHERE activity_status = 'open'
+      AND end_at &lt; CURRENT_TIMESTAMP(3)
+    ORDER BY end_at ASC
+    LIMIT #{limit}
+  </select>
+
+  <select id="countActiveApplicationsByActivityAndApplicant" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM applications
+    WHERE activity_id = #{activityId}
+      AND applicant_user_id = #{userId}
+      AND status IN
+      <foreach collection="statuses" item="status" open="(" separator="," close=")">
+        #{status}
+      </foreach>
+  </select>
+
+  <select id="countActivityParticipantsByUserAndStatuses" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM activity_participants
+    WHERE activity_id = #{activityId}
+      AND user_id = #{userId}
+      AND join_status IN
+      <foreach collection="statuses" item="status" open="(" separator="," close=")">
+        #{status}
+      </foreach>
+  </select>
+
+  <select id="selectActivityById" parameterType="map" resultType="map">
+    SELECT * FROM activities WHERE id = #{activityId}
+  </select>
+
+  <insert id="insertActivitySettlement" parameterType="map">
+    INSERT INTO activity_settlements(
+      id, activity_id, organizer_user_id, participant_count, paid_participant_count,
+      gross_accept_fee, organizer_income_amount, publish_fee_refund_amount,
+      settlement_status, settlement_reason, rule_snapshot_json, settled_at
+    ) VALUES(
+      #{id}, #{activityId}, #{organizerUserId}, #{participantCount}, #{paidParticipantCount},
+      #{gross}, #{income}, #{refund}, #{settlementStatus}, #{reason}, #{ruleSnapshotJson}, CURRENT_TIMESTAMP(3)
+    )
+  </insert>
+
+  <insert id="insertCommissionRecord" parameterType="map">
+    INSERT INTO commission_records(
+      id, user_id, activity_id, settlement_id, commission_type, base_amount, rate_value, amount, status, settled_at
+    ) VALUES(
+      #{id}, #{userId}, #{activityId}, #{settlementId}, 'activity_income', #{baseAmount}, #{rateValue}, #{amount}, 'settled', CURRENT_TIMESTAMP(3)
+    )
+  </insert>
+
+  <update id="updateActivityEnded" parameterType="map">
+    UPDATE activities
+    SET activity_status = 'ended',
+        settlement_status = #{settlementStatus},
+        ended_at = COALESCE(ended_at, CURRENT_TIMESTAMP(3)),
+        ended_reason = #{reason},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{activityId}
+  </update>
+
+  <update id="updateActivityParticipantsEnded" parameterType="map">
+    UPDATE activity_participants
+    SET join_status = 'ended',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE activity_id = #{activityId}
+      AND join_status IN ('accepted', 'paid')
+  </update>
+
+  <select id="selectPublicActivities" parameterType="map" resultType="map">
+    SELECT * FROM activities
+    WHERE review_status = 'approved'
+      AND activity_status = 'open'
+    <if test="organizerUserId != null and organizerUserId != ''">
+      AND organizer_user_id = #{organizerUserId}
+    </if>
+    <if test="category != null and category != ''">
+      AND category = #{category}
+    </if>
+    <if test="keyword != null and keyword != ''">
+      AND (title LIKE #{keyword} OR description LIKE #{keyword})
+    </if>
+    <if test="areaCode != null and areaCode != ''">
+      AND area_code = #{areaCode}
+    </if>
+    <if test="timeScope == 'today'">
+      AND DATE(start_at) = CURRENT_DATE()
+    </if>
+    <if test="timeScope == 'week'">
+      AND start_at &lt; DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY)
+    </if>
+    <if test="joinableOnly != null and joinableOnly">
+      AND participant_count &lt; capacity
+    </if>
+    ORDER BY start_at ASC, updated_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectApplicationsByActivityAndApplicantWithUser" parameterType="map" resultType="map">
+    SELECT a.*, u.nickname AS applicant_nickname, u.avatar_url AS applicant_avatar_url
+    FROM applications a
+    INNER JOIN users u ON a.applicant_user_id = u.id
+    WHERE a.id = #{applicationId}
+  </select>
+
+  <select id="selectApplicationsMine" parameterType="map" resultType="map">
+    SELECT a.*, u.nickname AS applicant_nickname, u.avatar_url AS applicant_avatar_url
+    FROM applications a
+    INNER JOIN users u ON a.applicant_user_id = u.id
+    WHERE a.applicant_user_id = #{userId}
+    <if test="status != null and status != ''">
+      AND a.status = #{status}
+    </if>
+    ORDER BY a.created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectApplicationsIncoming" parameterType="map" resultType="map">
+    SELECT a.*, u.nickname AS applicant_nickname, u.avatar_url AS applicant_avatar_url
+    FROM applications a
+    INNER JOIN activities ac ON a.activity_id = ac.id
+    INNER JOIN users u ON a.applicant_user_id = u.id
+    WHERE ac.organizer_user_id = #{userId}
+    <if test="status != null and status != ''">
+      AND a.status = #{status}
+    </if>
+    ORDER BY a.created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countActiveApplicationsForActivityAndUser" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM applications
+    WHERE activity_id = #{activityId}
+      AND applicant_user_id = #{userId}
+      AND status IN ('pending', 'accepted_pending_payment', 'accepted_paid')
+  </select>
+
+  <select id="selectNextApplicationAttemptNo" parameterType="map" resultType="int">
+    SELECT COALESCE(MAX(attempt_no), 0) + 1
+    FROM applications
+    WHERE activity_id = #{activityId}
+      AND applicant_user_id = #{userId}
+  </select>
+
+  <insert id="insertApplication" parameterType="map">
+    INSERT INTO applications(
+      id, activity_id, applicant_user_id, attempt_no, quote, status,
+      decision_reason, accept_fee_amount, accept_fee_paid, client_request_id
+    ) VALUES(
+      #{id}, #{activityId}, #{userId}, #{attemptNo}, #{quote}, 'pending', '', #{acceptFeeAmount}, 0, #{clientRequestId}
+    )
+  </insert>
+
+  <update id="updateApplicationReview" parameterType="map">
+    UPDATE applications
+    SET status = #{status},
+        accepted_by_user_id = #{acceptedByUserId},
+        decision_reason = #{reason},
+        accepted_at = #{acceptedAt},
+        rejected_at = #{rejectedAt},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{applicationId}
+  </update>
+
+  <update id="updateApplicationWithdrawn" parameterType="map">
+    UPDATE applications
+    SET status = 'withdrawn',
+        withdrawn_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{applicationId}
+  </update>
+
+  <update id="updateApplicationNoShow" parameterType="map">
+    UPDATE applications
+    SET status = 'no_show',
+        no_show_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{applicationId}
+  </update>
+
+  <update id="updateParticipantNoShowByApplicationId" parameterType="map">
+    UPDATE activity_participants
+    SET join_status = 'no_show',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE source_application_id = #{applicationId}
+  </update>
+
+  <update id="updateApplicationAcceptedPaid" parameterType="map">
+    UPDATE applications
+    SET status = 'accepted_paid',
+        accept_fee_paid = 1,
+        accept_fee_order_id = #{orderId},
+        conversation_id = #{conversationId},
+        paid_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{applicationId}
+  </update>
+
+  <select id="selectActivityParticipantByActivityAndUser" parameterType="map" resultType="map">
+    SELECT * FROM activity_participants WHERE activity_id = #{activityId} AND user_id = #{userId}
+  </select>
+
+  <insert id="insertPaidParticipant" parameterType="map">
+    INSERT INTO activity_participants(id, activity_id, user_id, role, join_status, source_application_id)
+    VALUES(#{id}, #{activityId}, #{userId}, 'participant', 'paid', #{applicationId})
+  </insert>
+
+  <update id="updateParticipantPaid" parameterType="map">
+    UPDATE activity_participants
+    SET join_status = 'paid',
+        source_application_id = #{applicationId},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{participantId}
+  </update>
+
+  <update id="updateActivityStatsAfterPayment" parameterType="map">
+    UPDATE activities
+    SET participant_count = (
+          SELECT COUNT(1) FROM activity_participants
+          WHERE activity_id = #{activityId} AND join_status IN ('organizer', 'accepted', 'paid')
+        ),
+        accepted_fee_total = accepted_fee_total + #{acceptFeeAmount},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{activityId}
+  </update>
+
+  <select id="selectConversationByBizTypeAndBizId" parameterType="map" resultType="map">
+    SELECT * FROM conversations WHERE biz_type = #{bizType} AND biz_id = #{bizId}
+  </select>
+
+  <insert id="insertConversation" parameterType="map">
+    INSERT INTO conversations(id, biz_type, biz_id, title, status, last_message_preview, last_message_seq)
+    VALUES(#{id}, #{bizType}, #{bizId}, #{title}, 'active', '', 0)
+  </insert>
+
+  <select id="selectActivityParticipantsForConversationSync" parameterType="map" resultType="map">
+    SELECT * FROM activity_participants
+    WHERE activity_id = #{activityId}
+      AND join_status IN ('organizer', 'accepted', 'paid')
+  </select>
+
+  <select id="countConversationMemberByConversationAndUser" parameterType="map" resultType="int">
+    SELECT COUNT(1) FROM conversation_members WHERE conversation_id = #{conversationId} AND user_id = #{userId}
+  </select>
+
+  <insert id="insertConversationMember" parameterType="map">
+    INSERT INTO conversation_members(id, conversation_id, user_id, member_role, can_send, unread_count)
+    VALUES(#{id}, #{conversationId}, #{userId}, #{memberRole}, 1, 0)
+  </insert>
+
+  <select id="selectPaymentOrderByOrderNo" parameterType="map" resultType="map">
+    SELECT * FROM payment_orders WHERE order_no = #{orderNo}
+  </select>
+
+  <update id="updatePaymentOrderSuccess" parameterType="map">
+    UPDATE payment_orders
+    SET status = 'success',
+        callback_json = #{callbackJson},
+        transaction_id = #{transactionId},
+        paid_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{orderId}
+  </update>
+
+  <select id="selectPaymentOrderById" parameterType="map" resultType="map">
+    SELECT * FROM payment_orders WHERE id = #{id}
+  </select>
+
+  <select id="selectWithdrawRequestByClientRequestId" parameterType="map" resultType="map">
+    SELECT * FROM withdraw_requests WHERE client_request_id = #{clientRequestId}
+  </select>
+
+  <insert id="insertWithdrawRequest" parameterType="map">
+    INSERT INTO withdraw_requests(id, request_no, user_id, amount, status, channel, client_request_id)
+    VALUES(#{id}, #{requestNo}, #{userId}, #{amount}, 'pending', #{channel}, #{clientRequestId})
+  </insert>
+
+  <select id="selectWithdrawRequestById" parameterType="map" resultType="map">
+    SELECT * FROM withdraw_requests WHERE id = #{id}
+  </select>
+
+  <select id="selectWithdrawRequests" parameterType="map" resultType="map">
+    SELECT * FROM withdraw_requests
+    WHERE 1 = 1
+    <if test="userId != null and userId != ''">
+      AND user_id = #{userId}
+    </if>
+    <if test="status != null and status != ''">
+      AND status = #{status}
+    </if>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <update id="updateWithdrawRequestReview" parameterType="map">
+    UPDATE withdraw_requests
+    SET status = #{status},
+        reviewer_admin_id = '01ADMIN000000000000000001',
+        reviewed_at = CURRENT_TIMESTAMP(3),
+        paid_at = #{paidAt},
+        reject_reason = #{rejectReason},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{id}
+  </update>
+
+  <insert id="insertPaymentOrder" parameterType="map">
+    INSERT INTO payment_orders(
+      id, order_no, user_id, order_type, biz_id, amount, status, channel, client_request_id, prepay_id, prepay_package
+    ) VALUES(
+      #{id}, #{orderNo}, #{userId}, #{orderType}, #{bizId}, #{amount}, 'created', #{channel}, #{clientRequestId}, #{prepayId}, #{prepayPackage}
+    )
+  </insert>
+
+  <select id="selectPaymentOrderByClientRequestId" parameterType="map" resultType="map">
+    SELECT * FROM payment_orders WHERE client_request_id = #{clientRequestId}
+  </select>
+
+  <select id="selectConversationListByUserId" parameterType="map" resultType="map">
+    SELECT c.*, m.unread_count, m.can_send
+    FROM conversation_members m
+    INNER JOIN conversations c ON m.conversation_id = c.id
+    WHERE m.user_id = #{userId}
+    ORDER BY c.last_message_at DESC, c.created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectConversationMembersByConversationId" parameterType="map" resultType="map">
+    SELECT * FROM conversation_members WHERE conversation_id = #{conversationId} ORDER BY joined_at ASC
+  </select>
+
+  <select id="selectMessagesByConversationId" parameterType="map" resultType="map">
+    SELECT * FROM messages
+    WHERE conversation_id = #{conversationId}
+    ORDER BY message_seq
+    <choose>
+      <when test="direction != null and direction == 'after'">ASC</when>
+      <otherwise>DESC</otherwise>
+    </choose>
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectNextMessageSeq" parameterType="map" resultType="long">
+    SELECT COALESCE(MAX(message_seq), 0) + 1
+    FROM messages
+    WHERE conversation_id = #{conversationId}
+  </select>
+
+  <insert id="insertMessage" parameterType="map">
+    INSERT INTO messages(
+      id, conversation_id, message_seq, client_msg_id, sender_user_id, sender_role,
+      msg_type, content_text, ext_json, moderation_status, moderation_reason, client_sent_at, sent_at
+    ) VALUES(
+      #{id}, #{conversationId}, #{messageSeq}, #{clientMsgId}, #{senderUserId}, 'self',
+      #{msgType}, #{contentText}, #{extJson}, #{moderationStatus}, #{moderationReason}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+    )
+  </insert>
+
+  <update id="updateConversationLastMessage" parameterType="map">
+    UPDATE conversations
+    SET last_message_id = #{lastMessageId},
+        last_message_seq = #{lastMessageSeq},
+        last_message_preview = #{preview},
+        last_message_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{conversationId}
+  </update>
+
+  <update id="incrementConversationUnreadForOthers" parameterType="map">
+    UPDATE conversation_members
+    SET unread_count = unread_count + 1,
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE conversation_id = #{conversationId}
+      AND user_id &lt;&gt; #{userId}
+  </update>
+
+  <select id="selectOtherConversationMemberUserIds" parameterType="map" resultType="map">
+    SELECT user_id
+    FROM conversation_members
+    WHERE conversation_id = #{conversationId}
+      AND user_id &lt;&gt; #{userId}
+  </select>
+
+  <select id="selectMessageById" parameterType="map" resultType="map">
+    SELECT * FROM messages WHERE id = #{id}
+  </select>
+
+  <select id="selectMessageIdByConversationAndSeq" parameterType="map" resultType="map">
+    SELECT id FROM messages WHERE conversation_id = #{conversationId} AND message_seq = #{messageSeq}
+  </select>
+
+  <update id="updateConversationMemberRead" parameterType="map">
+    UPDATE conversation_members
+    SET last_read_message_id = #{lastReadMessageId},
+        last_read_message_seq = #{lastReadMessageSeq},
+        last_read_at = CURRENT_TIMESTAMP(3),
+        unread_count = 0,
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{membershipId}
+  </update>
+
+  <select id="selectConversationIdByActivityId" parameterType="map" resultType="map">
+    SELECT id FROM conversations WHERE biz_type = 'activity' AND biz_id = #{activityId}
+  </select>
+
+  <select id="selectClosableConversationIds" parameterType="map" resultType="map">
+    SELECT c.id
+    FROM conversations c
+    INNER JOIN activities a ON c.biz_id = a.id
+    WHERE c.biz_type = 'activity'
+      AND c.status &lt;&gt; 'closed'
+      AND a.activity_status IN ('ended', 'withdrawn', 'archived')
+    LIMIT #{limit}
+  </select>
+
+  <update id="updateConversationClosed" parameterType="map">
+    UPDATE conversations
+    SET status = 'closed',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{conversationId}
+  </update>
+
+  <select id="selectConversationMemberByConversationAndUser" parameterType="map" resultType="map">
+    SELECT * FROM conversation_members WHERE conversation_id = #{conversationId} AND user_id = #{userId}
+  </select>
+
+  <select id="selectConversationById" parameterType="map" resultType="map">
+    SELECT * FROM conversations WHERE id = #{conversationId}
+  </select>
+
+  <insert id="insertSupportTicket" parameterType="map">
+    INSERT INTO support_tickets(id, ticket_no, user_id, source_conversation_id, category, priority, status, tags_json, summary)
+    VALUES(#{id}, #{ticketNo}, #{userId}, #{sourceConversationId}, #{category}, 'normal', 'open', #{tagsJson}, #{summary})
+  </insert>
+
+  <insert id="insertSupportTicketMessage" parameterType="map">
+    INSERT INTO support_ticket_messages(id, ticket_id, sender_type, sender_id, content_text, attachments_json)
+    VALUES(#{id}, #{ticketId}, 'user', #{senderId}, #{contentText}, #{attachmentsJson})
+  </insert>
+
+  <select id="selectSupportTicketsByUserId" parameterType="map" resultType="map">
+    SELECT * FROM support_tickets
+    WHERE user_id = #{userId}
+    <if test="status != null and status != ''">
+      AND status = #{status}
+    </if>
+    ORDER BY updated_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <update id="updateSupportTicketPendingAgent" parameterType="map">
+    UPDATE support_tickets
+    SET status = 'pending_agent',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{ticketId}
+  </update>
+
+  <select id="selectFaqArticles" parameterType="map" resultType="map">
+    SELECT * FROM faq_articles
+    WHERE status = 'published'
+    <if test="keyword != null and keyword != ''">
+      AND (title LIKE #{keyword} OR answer_text LIKE #{keyword})
+    </if>
+    ORDER BY sort_no ASC, updated_at DESC
+  </select>
+
+  <select id="selectSupportTicketById" parameterType="map" resultType="map">
+    SELECT * FROM support_tickets WHERE id = #{ticketId}
+  </select>
+
+  <select id="selectSupportTicketMessageById" parameterType="map" resultType="map">
+    SELECT * FROM support_ticket_messages WHERE id = #{messageId}
+  </select>
+
+  <insert id="insertReport" parameterType="map">
+    INSERT INTO reports(id, reporter_user_id, target_type, target_id, reason_type, content_text, evidence_json, status)
+    VALUES(#{id}, #{userId}, #{targetType}, #{targetId}, #{reasonType}, #{contentText}, #{evidenceJson}, 'pending')
+  </insert>
+
+  <insert id="insertModerationLog" parameterType="map">
+    INSERT INTO message_moderation_logs(id, user_id, conversation_id, message_id, hit_category, hit_keyword, action, raw_text)
+    VALUES(#{id}, #{userId}, #{conversationId}, NULL, #{category}, #{hitKeyword}, #{action}, #{rawText})
+  </insert>
+
+  <select id="selectReports" parameterType="map" resultType="map">
+    SELECT * FROM reports
+    WHERE 1 = 1
+    <if test="status != null and status != ''">
+      AND status = #{status}
+    </if>
+    <if test="targetType != null and targetType != ''">
+      AND target_type = #{targetType}
+    </if>
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectReportById" parameterType="map" resultType="map">
+    SELECT * FROM reports WHERE id = #{reportId}
+  </select>
+
+  <update id="updateReportReview" parameterType="map">
+    UPDATE reports
+    SET status = #{status},
+        reviewer_admin_id = '01ADMIN000000000000000001',
+        decision = #{decision},
+        decision_remark = #{remark},
+        reviewed_at = CURRENT_TIMESTAMP(3),
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{reportId}
+  </update>
+
+  <update id="updateUserStatus" parameterType="map">
+    UPDATE users
+    SET status = #{userStatus},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = #{userId}
+  </update>
+
+  <update id="updateUserCreditRestriction" parameterType="map">
+    UPDATE user_credit
+    SET risk_level = 'high',
+        restricted_until = #{restrictedUntil},
+        notes = #{notes},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE user_id = #{userId}
+  </update>
+
+  <select id="selectUserIdsForCreditSync" parameterType="map" resultType="map">
+    SELECT id FROM users ORDER BY created_at ASC LIMIT #{limit}
+  </select>
+
+  <select id="countApplicationsByApplicantAndStatus" parameterType="map" resultType="int">
+    SELECT COUNT(1) FROM applications WHERE applicant_user_id = #{userId} AND status = #{status}
+  </select>
+
+  <select id="countCompletedApplicationsByApplicant" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM applications a
+    INNER JOIN activities ac ON a.activity_id = ac.id
+    WHERE a.applicant_user_id = #{userId}
+      AND a.status = 'accepted_paid'
+      AND ac.activity_status = 'ended'
+  </select>
+
+  <select id="countReportsByTargetUser" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM reports
+    WHERE target_type = 'user'
+      AND target_id = #{userId}
+      AND status IN ('pending', 'resolved')
+  </select>
+
+  <update id="updateUserCreditScore" parameterType="map">
+    UPDATE user_credit
+    SET credit_score = #{creditScore},
+        no_show_count = #{noShowCount},
+        withdraw_count = #{withdrawCount},
+        complete_count = #{completeCount},
+        report_count = #{reportCount},
+        risk_level = #{riskLevel},
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE user_id = #{userId}
+  </update>
+
+  <select id="countUsersWithUnreadNotifications" parameterType="map" resultType="int">
+    SELECT COUNT(1)
+    FROM (
+      SELECT user_id
+      FROM notifications
+      WHERE read_status = 'unread'
+      GROUP BY user_id
+      LIMIT #{limit}
+    ) t
+  </select>
+
+  <update id="archiveActivities" parameterType="map">
+    UPDATE activities
+    SET activity_status = 'archived',
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE activity_status IN ('ended', 'withdrawn')
+      AND ended_at &lt; #{archiveBefore}
+    LIMIT #{limit}
+  </update>
+
+</mapper>

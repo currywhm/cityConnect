@@ -1,0 +1,70 @@
+{
+  "groups": [
+    {
+      "name": "app",
+      "type": "com.tencent.wxcloudrun.config.AppProperties",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties"
+    },
+    {
+      "name": "app.auth",
+      "type": "com.tencent.wxcloudrun.config.AppProperties$Auth",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties",
+      "sourceMethod": "getAuth()"
+    },
+    {
+      "name": "app.chat",
+      "type": "com.tencent.wxcloudrun.config.AppProperties$Chat",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties",
+      "sourceMethod": "getChat()"
+    },
+    {
+      "name": "app.fee",
+      "type": "com.tencent.wxcloudrun.config.AppProperties$Fee",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties",
+      "sourceMethod": "getFee()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "app.auth.admin-token",
+      "type": "java.lang.String",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Auth"
+    },
+    {
+      "name": "app.auth.internal-token",
+      "type": "java.lang.String",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Auth"
+    },
+    {
+      "name": "app.auth.session-days",
+      "type": "java.lang.Integer",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Auth"
+    },
+    {
+      "name": "app.chat.ws-url",
+      "type": "java.lang.String",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Chat"
+    },
+    {
+      "name": "app.fee.accept-fee-amount",
+      "type": "java.math.BigDecimal",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Fee"
+    },
+    {
+      "name": "app.fee.commission-rate",
+      "type": "java.math.BigDecimal",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Fee"
+    },
+    {
+      "name": "app.fee.publish-fee-amount",
+      "type": "java.math.BigDecimal",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Fee"
+    },
+    {
+      "name": "app.fee.signup-bonus-amount",
+      "type": "java.math.BigDecimal",
+      "sourceType": "com.tencent.wxcloudrun.config.AppProperties$Fee"
+    }
+  ],
+  "hints": []
+}

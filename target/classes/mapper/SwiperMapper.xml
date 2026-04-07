@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tencent.wxcloudrun.dao.SwiperMapper">
+    <resultMap id="swiperMapper" type="com.tencent.wxcloudrun.model.Swiper">
+        <id property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="img" column="img"/>
+    </resultMap>
+    <select id="getSwiper" resultMap="swiperMapper" parameterType="com.tencent.wxcloudrun.model.Swiper">
+        SELECT `id`, `type`, `img`
+        FROM swiper
+        <where>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+        </where>
+    </select>
+</mapper>
