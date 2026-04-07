@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `idx_users_unionid` (`unionid`),
   KEY `idx_users_status` (`status`),
   KEY `idx_users_registered_at` (`registered_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `admin_users` (
   `id` CHAR(26) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `admin_users` (
   UNIQUE KEY `uk_admin_users_login_name` (`login_name`),
   KEY `idx_admin_users_role_code` (`role_code`),
   KEY `idx_admin_users_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `user_profiles` (
   `user_id` CHAR(26) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `user_profiles` (
   CONSTRAINT `fk_user_profiles_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `user_credit` (
   `user_id` CHAR(26) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `user_credit` (
   CONSTRAINT `fk_user_credit_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `user_blocks` (
   `id` CHAR(26) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `user_blocks` (
   CONSTRAINT `fk_user_blocks_blocked_user_id`
     FOREIGN KEY (`blocked_user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `wallet_accounts` (
   `user_id` CHAR(26) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `wallet_accounts` (
   CONSTRAINT `fk_wallet_accounts_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `activities` (
   `id` CHAR(26) NOT NULL,
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `activities` (
   CONSTRAINT `fk_activities_organizer_user_id`
     FOREIGN KEY (`organizer_user_id`) REFERENCES `users` (`id`)
     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `activity_media` (
   `id` CHAR(26) NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `activity_media` (
   CONSTRAINT `fk_activity_media_activity_id`
     FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `activity_reviews` (
   `id` CHAR(26) NOT NULL,
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS `activity_reviews` (
   CONSTRAINT `fk_activity_reviews_reviewer_admin_id`
     FOREIGN KEY (`reviewer_admin_id`) REFERENCES `admin_users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `payment_orders` (
   `id` CHAR(26) NOT NULL,
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS `payment_orders` (
   CONSTRAINT `fk_payment_orders_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `applications` (
   `id` CHAR(26) NOT NULL,
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS `applications` (
   CONSTRAINT `fk_applications_accepted_by_user_id`
     FOREIGN KEY (`accepted_by_user_id`) REFERENCES `users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `activity_participants` (
   `id` CHAR(26) NOT NULL,
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `activity_participants` (
   CONSTRAINT `fk_activity_participants_source_application_id`
     FOREIGN KEY (`source_application_id`) REFERENCES `applications` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `conversations` (
   `id` CHAR(26) NOT NULL,
@@ -297,7 +297,7 @@ CREATE TABLE IF NOT EXISTS `conversations` (
   UNIQUE KEY `uk_conversations_biz_type_biz_id` (`biz_type`, `biz_id`),
   KEY `idx_conversations_status` (`status`),
   KEY `idx_conversations_last_message_at` (`last_message_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `conversation_members` (
   `id` CHAR(26) NOT NULL,
@@ -323,7 +323,7 @@ CREATE TABLE IF NOT EXISTS `conversation_members` (
   CONSTRAINT `fk_conversation_members_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `messages` (
   `id` CHAR(26) NOT NULL,
@@ -351,7 +351,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
   CONSTRAINT `fk_messages_sender_user_id`
     FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `notifications` (
   `id` CHAR(26) NOT NULL,
@@ -373,7 +373,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   CONSTRAINT `fk_notifications_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `wallet_ledger` (
   `id` CHAR(26) NOT NULL,
@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS `wallet_ledger` (
   CONSTRAINT `fk_wallet_ledger_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `withdraw_requests` (
   `id` CHAR(26) NOT NULL,
@@ -428,7 +428,7 @@ CREATE TABLE IF NOT EXISTS `withdraw_requests` (
   CONSTRAINT `fk_withdraw_requests_reviewer_admin_id`
     FOREIGN KEY (`reviewer_admin_id`) REFERENCES `admin_users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `activity_settlements` (
   `id` CHAR(26) NOT NULL,
@@ -455,7 +455,7 @@ CREATE TABLE IF NOT EXISTS `activity_settlements` (
   CONSTRAINT `fk_activity_settlements_organizer_user_id`
     FOREIGN KEY (`organizer_user_id`) REFERENCES `users` (`id`)
     ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `commission_records` (
   `id` CHAR(26) NOT NULL,
@@ -483,7 +483,7 @@ CREATE TABLE IF NOT EXISTS `commission_records` (
   CONSTRAINT `fk_commission_records_settlement_id`
     FOREIGN KEY (`settlement_id`) REFERENCES `activity_settlements` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `support_tickets` (
   `id` CHAR(26) NOT NULL,
@@ -514,7 +514,7 @@ CREATE TABLE IF NOT EXISTS `support_tickets` (
   CONSTRAINT `fk_support_tickets_assignee_admin_id`
     FOREIGN KEY (`assignee_admin_id`) REFERENCES `admin_users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `support_ticket_messages` (
   `id` CHAR(26) NOT NULL,
@@ -530,7 +530,7 @@ CREATE TABLE IF NOT EXISTS `support_ticket_messages` (
   CONSTRAINT `fk_support_ticket_messages_ticket_id`
     FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `faq_articles` (
   `id` CHAR(26) NOT NULL,
@@ -544,7 +544,7 @@ CREATE TABLE IF NOT EXISTS `faq_articles` (
   PRIMARY KEY (`id`),
   KEY `idx_faq_articles_status` (`status`),
   KEY `idx_faq_articles_sort_no` (`sort_no`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `reports` (
   `id` CHAR(26) NOT NULL,
@@ -571,7 +571,7 @@ CREATE TABLE IF NOT EXISTS `reports` (
   CONSTRAINT `fk_reports_reviewer_admin_id`
     FOREIGN KEY (`reviewer_admin_id`) REFERENCES `admin_users` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `message_moderation_logs` (
   `id` CHAR(26) NOT NULL,
@@ -596,7 +596,7 @@ CREATE TABLE IF NOT EXISTS `message_moderation_logs` (
   CONSTRAINT `fk_message_moderation_logs_message_id`
     FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`)
     ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `audit_logs` (
   `id` CHAR(26) NOT NULL,
@@ -613,4 +613,4 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   KEY `idx_audit_logs_operator` (`operator_type`, `operator_id`),
   KEY `idx_audit_logs_target` (`target_type`, `target_id`),
   KEY `idx_audit_logs_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

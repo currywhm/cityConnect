@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `app_sessions` (
   CONSTRAINT `fk_app_sessions_user_id`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `admin_users` (`id`, `login_name`, `display_name`, `role_code`, `status`)
 VALUES ('01ADMIN000000000000000001', 'admin', '系统管理员', 'super_admin', 'active');
